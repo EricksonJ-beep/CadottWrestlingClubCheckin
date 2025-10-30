@@ -1,0 +1,43 @@
+{
+  "name": "cadott-wrestling-attendance",
+  "version": "1.0.0",
+  "description": "Real-time attendance tracker for Cadott Wrestling Club optimized for tablet use.",
+  "main": "src/js/app.js",
+  "scripts": {
+    "start": "firebase serve",
+    "build": "npm run build-css && npm run build-js",
+    "build-css": "postcss src/styles/input.css -o public/styles.css",
+    "watch-css": "tailwindcss -i ./src/styles/input.css -o ./public/styles.css --watch",
+    "build-js": "webpack --mode production",
+    "test": "jest"
+  },
+  "dependencies": {
+    "firebase": "^9.0.0",
+    "jest": "^27.0.0",
+    "postcss": "^8.0.0",
+    "tailwindcss": "^2.0.0",
+    "webpack": "^5.0.0",
+    "webpack-cli": "^4.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-react": "^7.28.5",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "autoprefixer": "^10.0.0",
+    "babel-jest": "^30.2.0",
+    "identity-obj-proxy": "^3.0.0",
+    "postcss-cli": "^11.0.1"
+  },
+  "keywords": [
+    "attendance",
+    "wrestling",
+    "firebase",
+    "real-time",
+    "tablet"
+  ],
+  "author": "Cadott Wrestling Club",
+  "license": "MIT"
+}

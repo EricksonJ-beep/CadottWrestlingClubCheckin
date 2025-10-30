@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cadott Wrestling Club - Check In</title>
+    <link href="styles.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="logo.png" type="image/png">
+    <style>
+        /* Custom Wrestling Theme Styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .wrestling-header {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .grade-tab {
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .grade-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .grade-tab.active {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #800000;
+        }
+        
+        .athlete-card {
+            transition: all 0.2s ease;
+        }
+        
+        .athlete-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .check-in-btn {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            transition: all 0.2s ease;
+        }
+        
+        .check-in-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: scale(1.05);
+        }
+        
+        .checked-in {
+            background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+            border-left: 4px solid #10B981;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="wrestling-header text-gray-900 p-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <!-- Logo placeholder - you can upload your logo here -->
+                <img src="logo.png" alt="Cadott Wrestling Logo" class="h-16 w-16 object-contain" id="club-logo" onerror="this.style.display='none'">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-black tracking-tight">CADOTT WRESTLING</h1>
+                    <p class="text-sm md:text-base opacity-90 mt-1">Attendance Tracker</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div id="current-date" class="text-right">
+                    <div class="text-xs opacity-75">Today</div>
+                    <div class="font-bold text-lg" id="date-display"></div>
+                </div>
+                <button id="refresh-btn" class="bg-green-600 bg-opacity-90 hover:bg-green-700 text-white px-4 py-3 rounded-lg transition flex items-center space-x-2 shadow-md" title="Refresh athlete list from Google Sheets">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span class="hidden md:inline">Refresh</span>
+                </button>
+                <a href="season-stats.html" class="bg-purple-600 bg-opacity-90 hover:bg-purple-700 text-white px-4 py-3 rounded-lg transition flex items-center space-x-2 shadow-md" title="View season statistics">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span class="hidden md:inline">Stats</span>
+                </a>
+                <button id="export-csv-btn" class="bg-blue-600 bg-opacity-90 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition flex items-center space-x-2 shadow-md" title="Export attendance CSV">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span class="hidden md:inline">Export</span>
+                </button>
+                <button id="settings-btn" class="bg-gray-800 bg-opacity-10 hover:bg-opacity-20 p-3 rounded-lg transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-4 md:p-6 max-w-6xl">
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-lg p-4 shadow-md text-center">
+                <div class="text-2xl font-bold text-green-600" id="checked-in-count">0</div>
+                <div class="text-sm text-gray-600">Checked In</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-md text-center">
+                <div class="text-2xl font-bold text-gray-700" id="total-count">0</div>
+                <div class="text-sm text-gray-600">Total Athletes</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-md text-center">
+                <div class="text-2xl font-bold text-amber-600" id="attendance-rate">0%</div>
+                <div class="text-sm text-gray-600">Attendance</div>
+            </div>
+        </div>
+
+        <!-- Grade Tabs -->
+        <div id="grade-tabs" class="bg-white rounded-lg p-2 shadow-md mb-6 overflow-x-auto">
+            <div class="flex space-x-2 min-w-max">
+                <button class="grade-tab active bg-yellow-400 text-gray-800 px-6 py-3 rounded-lg" data-grade="all">
+                    All Grades
+                </button>
+                <button class="grade-tab bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300" data-grade="4k-1">
+                    4K-1st <span class="ml-2 text-xs font-semibold text-gray-600" id="group-count-4k-1">(0/0)</span>
+                </button>
+                <button class="grade-tab bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300" data-grade="2-3">
+                    2nd-3rd <span class="ml-2 text-xs font-semibold text-gray-600" id="group-count-2-3">(0/0)</span>
+                </button>
+                <button class="grade-tab bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300" data-grade="4-5">
+                    4th-5th <span class="ml-2 text-xs font-semibold text-gray-600" id="group-count-4-5">(0/0)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="bg-white rounded-lg p-4 shadow-md mb-6">
+            <div class="relative">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    placeholder="🔍 Search wrestler by name..."
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-yellow-400 text-lg"
+                >
+            </div>
+        </div>
+
+        <!-- Athlete List -->
+        <div id="athlete-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Athletes will be rendered here by JavaScript -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-12">
+            <div class="text-6xl mb-4">🤼</div>
+            <h3 class="text-xl font-bold text-gray-700 mb-2">No Athletes Found</h3>
+            <p class="text-gray-600">Add athletes to get started or check your filters.</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+            <p class="mt-4 text-gray-600">Loading athletes...</p>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        // Set current date
+        const dateDisplay = document.getElementById('date-display');
+        const today = new Date();
+        const options = { month: 'short', day: 'numeric' };
+        dateDisplay.textContent = today.toLocaleDateString('en-US', options);
+    </script>
+    <!-- Google Sheets Integration (loads first) -->
+    <script src="google-sheets-integration.js"></script>
+    <!-- Test Data (fallback) -->
+    <script src="test-data.js"></script>
+    <!-- App Display Logic -->
+    <script src="app-display.js"></script>
+    <!-- Firebase (commented out for testing) -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="src/js/app.js" type="module"></script> -->
+</body>
+</html>

@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    @apply bg-gray-100 text-gray-800 antialiased;
+}
+
+h1, h2, h3, h4 {
+    @apply font-bold;
+}
+
+.button {
+    @apply bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-all duration-200;
+}
+
+.athlete-card {
+    @apply bg-white p-5 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer;
+}
+
+.check-in-button {
+    @apply w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 shadow-md hover:shadow-lg transition-all duration-200;
+}

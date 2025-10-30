@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /attendance/{document=**} {
+      allow read, write: if request.auth != null; // Allow access only to authenticated users
+    }
+    
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId; // Allow users to read their own data
+      allow write: if request.auth != null && request.auth.uid == userId; // Allow users to write their own data
+    }
+    
+    match /roster/{document=**} {
+      allow read: if request.auth != null; // Allow access to roster data for authenticated users
+      allow write: if request.auth != null && request.auth.token.admin == true; // Allow only admin users to write to roster
+    }
+  }
+}

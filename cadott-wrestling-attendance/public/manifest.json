@@ -1,0 +1,21 @@
+{
+  "name": "Cadott Wrestling Attendance",
+  "short_name": "Wrestling Attendance",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4A90E2",
+  "description": "A real-time attendance tracker for the Cadott Wrestling Club.",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

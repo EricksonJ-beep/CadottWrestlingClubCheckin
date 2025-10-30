@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .athlete {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+        .grade-group {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        .k-2 { background: #4CAF50; }
+        .3-4 { background: #2196F3; }
+        .5-6 { background: #FF9800; }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #FFD700;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #FFA500;
+        }
+        #status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🤼 Google Sheets Integration Test</h1>
+    
+    <div id="status"></div>
+    
+    <button onclick="testFetch()">Load Athletes from Google Sheets</button>
+    
+    <div id="results"></div>
+    
+    <script src="google-sheets-integration.js"></script>
+    <script>
+        async function testFetch() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.innerHTML = '⏳ Loading...';
+            statusDiv.className = '';
+            resultsDiv.innerHTML = '';
+            
+            try {
+                const athletes = await window.fetchAthletesFromSheet();
+                
+                if (athletes && athletes.length > 0) {
+                    statusDiv.innerHTML = `✅ Success! Loaded ${athletes.length} athletes from Google Sheets`;
+                    statusDiv.className = 'success';
+                    
+                    resultsDiv.innerHTML = '<h2>Athletes:</h2>' + 
+                        athletes.map(athlete => `
+                            <div class="athlete">
+                                <strong>${athlete.firstName} ${athlete.lastName}</strong> - 
+                                Grade: ${athlete.grade}
+                                <span class="grade-group ${athlete.gradeGroup}">${athlete.gradeGroup.toUpperCase()}</span>
+                            </div>
+                        `).join('');
+                } else {
+                    statusDiv.innerHTML = '⚠️ No athletes found in spreadsheet';
+                    statusDiv.className = 'error';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `❌ Error: ${error.message}`;
+                statusDiv.className = 'error';
+                console.error('Test error:', error);
+            }
+        }
+        
+        // Auto-load on page load
+        testFetch();
+    </script>
+</body>
+</html>
