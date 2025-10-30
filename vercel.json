@@ -1,12 +1,13 @@
 {
   "version": 2,
   "name": "cadott-wrestling-attendance",
-  "public": true,
   "builds": [
-    { "src": "cadott-wrestling-attendance/public/**", "use": "@vercel/static" }
+    { "src": "cadott-wrestling-attendance/public/**", "use": "@vercel/static" },
+    { "src": "api/**/*.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "cadott-wrestling-attendance/public/$1" }
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/api/fallback" }
   ],
   "headers": [
     {
