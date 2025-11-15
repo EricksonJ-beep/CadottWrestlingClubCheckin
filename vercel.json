@@ -1,7 +1,9 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/", "destination": "/cadott-wrestling-attendance/public/index.html" },
     { "source": "/(.*)", "destination": "/cadott-wrestling-attendance/public/$1" }
+  ],
+  "redirects": [
+    { "source": "/cadott-wrestling-attendance/public/(.*)", "destination": "/$1", "statusCode": 308 }
   ]
 }

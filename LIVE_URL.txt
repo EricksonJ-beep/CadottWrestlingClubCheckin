@@ -1,0 +1,12 @@
+Production URL:
+https://cadott-wrestling-club-checkin.vercel.app/
+
+Key pages:
+- Main Check-In: https://cadott-wrestling-club-checkin.vercel.app/index.html
+- Season Stats: https://cadott-wrestling-club-checkin.vercel.app/season-stats.html
+- Go Live: https://cadott-wrestling-club-checkin.vercel.app/go-live.html
+
+Canonicalization:
+Requests to /cadott-wrestling-attendance/public/* should redirect to the shorter root paths after the next deployment.
+
+If root / does not auto-render the app, use /index.html explicitly.
