@@ -156,6 +156,12 @@
         if (exportBtn) {
             exportBtn.addEventListener('click', exportAttendanceCSV);
         }
+
+        // Reset attendance history button
+        const resetBtn = document.getElementById('reset-attendance-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', resetAttendanceHistory);
+        }
     }
 
     // Render athletes to the grid
@@ -480,4 +486,22 @@ const url = URL.createObjectURL(blob);
         const percent = total > 0 ? Math.round((present / total) * 100) : 0;
         return { present, total, percent };
     }
+
+    // ---------- Reset attendance history ----------
+    function resetAttendanceHistory() {
+        const confirmMsg = 'Reset ALL attendance history (practice dates + check-ins)? This cannot be undone.';
+        if (!window.confirm(confirmMsg)) return;
+        try {
+            localStorage.removeItem(ATTENDANCE_STORAGE_KEY);
+            localStorage.removeItem(PRACTICE_DATES_KEY);
+        } catch (_) {}
+        // Clear checkedIn flags for current roster
+        athletes.forEach(a => a.checkedIn = false);
+        renderAthletes();
+        updateStats();
+        showToast('🧹 Attendance history reset');
+    }
+
+    // Expose reset function for Coaches Corner page
+    window.resetAttendanceHistory = resetAttendanceHistory;
 })();
