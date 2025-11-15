@@ -504,4 +504,30 @@ const url = URL.createObjectURL(blob);
 
     // Expose reset function for Coaches Corner page
     window.resetAttendanceHistory = resetAttendanceHistory;
+
+    // ---------- Reset ONLY today's attendance ----------
+    function resetTodayAttendance() {
+        const todayKey = getTodayCentralKey();
+        const confirmMsg = 'Clear all check-ins for TODAY only? Past attendance will remain.';
+        if (!window.confirm(confirmMsg)) return;
+        const records = loadAttendanceRecords();
+        // Remove today's record entirely
+        if (records[todayKey]) {
+            delete records[todayKey];
+            saveAttendanceRecords(records);
+        }
+        // Remove today from practice dates (it will be re-added if someone checks in again)
+        let dates = loadPracticeDates();
+        if (dates.includes(todayKey)) {
+            dates = dates.filter(d => d !== todayKey);
+            savePracticeDates(dates);
+        }
+        // Clear in-memory checkedIn flags for current roster
+        athletes.forEach(a => a.checkedIn = false);
+        renderAthletes();
+        updateStats();
+        showToast('🔁 Today\'s attendance cleared');
+    }
+
+    window.resetTodayAttendance = resetTodayAttendance;
 })();
