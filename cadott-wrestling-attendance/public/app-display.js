@@ -4,6 +4,25 @@
     let currentFilter = 'all';
     const ATTENDANCE_STORAGE_KEY = 'attendanceRecordsV1';
     const PRACTICE_DATES_KEY = 'practiceDatesV1';
+    const PRACTICE_FINALIZED_KEY = 'practiceFinalizedV1';
+
+    function loadFinalizedMap() {
+        try { return JSON.parse(localStorage.getItem(PRACTICE_FINALIZED_KEY) || '{}'); } catch (_) { return {}; }
+    }
+    function saveFinalizedMap(map) {
+        try { localStorage.setItem(PRACTICE_FINALIZED_KEY, JSON.stringify(map)); } catch (_) {}
+    }
+    function isTodayFinalized() {
+        const map = loadFinalizedMap();
+        const today = getTodayCentralKey();
+        return !!map[today];
+    }
+    function setTodayFinalized(value) {
+        const map = loadFinalizedMap();
+        const today = getTodayCentralKey();
+        if (value) map[today] = true; else delete map[today];
+        saveFinalizedMap(map);
+    }
 
     // Initialize the app
         async function init() {
@@ -28,6 +47,7 @@
             setupEventListeners();
             renderAthletes();
             updateStats();
+            updateSubmittedBadge();
             scheduleDailyAutoRefresh();
         }
 
@@ -192,6 +212,7 @@
         displayAthletes.sort((a, b) => a.lastName.localeCompare(b.lastName));
         
         // Generate HTML
+        const locked = isTodayFinalized();
         container.innerHTML = displayAthletes.map(athlete => {
             const key = buildAthleteKey(athlete);
             const summary = getAthleteAttendanceSummary(key);
@@ -208,9 +229,9 @@
                         ${athlete.checkedIn ? '✅' : '🤼'}
                     </div>
                 </div>
-                <button class="check-in-btn w-full ${athlete.checkedIn ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200" 
-                        onclick="toggleCheckIn(${athlete.id})">
-                    ${athlete.checkedIn ? 'Check Out' : 'Check In'}
+                <button class="check-in-btn w-full ${athlete.checkedIn ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-500 hover:bg-green-600'} ${locked ? 'opacity-60 cursor-not-allowed' : ''} text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200" 
+                        ${locked ? 'disabled' : ''} onclick="toggleCheckIn(${athlete.id})">
+                    ${locked ? 'Submitted' : (athlete.checkedIn ? 'Check Out' : 'Check In')}
                 </button>
             </div>`;
         }).join('');
@@ -218,6 +239,7 @@
 
     // Toggle check-in status
     window.toggleCheckIn = function(athleteId) {
+        if (isTodayFinalized()) { showToast('📌 Today is submitted and locked'); return; }
         const athlete = athletes.find(a => a.id === athleteId);
         if (athlete) {
             athlete.checkedIn = !athlete.checkedIn;
@@ -494,11 +516,13 @@ const url = URL.createObjectURL(blob);
         try {
             localStorage.removeItem(ATTENDANCE_STORAGE_KEY);
             localStorage.removeItem(PRACTICE_DATES_KEY);
+            localStorage.removeItem(PRACTICE_FINALIZED_KEY);
         } catch (_) {}
         // Clear checkedIn flags for current roster
         athletes.forEach(a => a.checkedIn = false);
         renderAthletes();
         updateStats();
+        updateSubmittedBadge();
         showToast('🧹 Attendance history reset');
     }
 
@@ -522,12 +546,38 @@ const url = URL.createObjectURL(blob);
             dates = dates.filter(d => d !== todayKey);
             savePracticeDates(dates);
         }
+        // Clear today's finalized lock if set
+        setTodayFinalized(false);
         // Clear in-memory checkedIn flags for current roster
         athletes.forEach(a => a.checkedIn = false);
         renderAthletes();
         updateStats();
+        updateSubmittedBadge();
         showToast('🔁 Today\'s attendance cleared');
     }
 
     window.resetTodayAttendance = resetTodayAttendance;
+
+    // ---------- Submit today's attendance (lock) ----------
+    function updateSubmittedBadge() {
+        const badge = document.getElementById('submitted-badge');
+        if (!badge) return;
+        if (isTodayFinalized()) {
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    function submitTodayAttendance() {
+        if (isTodayFinalized()) { showToast('📌 Today is already submitted'); return; }
+        if (!window.confirm('Submit and lock TODAY\'s attendance? This will disable check-ins/outs for today.')) return;
+        setTodayFinalized(true);
+        renderAthletes();
+        updateStats();
+        updateSubmittedBadge();
+        showToast('📌 Today submitted and locked');
+    }
+
+    window.submitTodayAttendance = submitTodayAttendance;
 })();

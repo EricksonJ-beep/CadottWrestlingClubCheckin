@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Printable Roster</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link href="styles.css" rel="stylesheet" />
+  <style>
+    :root { --ink:#111827; --muted:#6b7280; }
+    body { font-family: 'Roboto', sans-serif; color: var(--ink); background:#f8fafc; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px; background:#fff; border-bottom:1px solid #e5e7eb; position:sticky; top:0; }
+    .title { font-weight:900; font-size:1.25rem; }
+    .muted { color: var(--muted); font-size:.9rem; }
+    .btn { background:#111827; color:#fff; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn:hover { filter:brightness(1.1); }
+
+    .sheet { max-width: 900px; margin: 20px auto; background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; }
+    .sheet-head { padding:16px 20px; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; justify-content:space-between; }
+    .sheet-title { font-size:1.1rem; font-weight:800; }
+    .counts { color: var(--muted); font-size:.9rem; }
+
+    table { width:100%; border-collapse:collapse; }
+    th, td { border-bottom:1px solid #e5e7eb; padding:10px 12px; text-align:left; font-size:.95rem; }
+    th { background:#f9fafb; font-weight:800; color:#374151; }
+    tr:nth-child(even) td { background:#fcfcfd; }
+
+    .col-n { width:48px; }
+    .col-name { width:auto; }
+    .col-grade { width:120px; }
+    .col-notes { width:220px; }
+
+    @media print {
+      .topbar { display:none; }
+      body { background:#fff; }
+      .sheet { border:none; margin:0; }
+      th, td { font-size:12pt; padding:8pt 10pt; }
+      .col-notes { width:260px; }
+      @page { size: auto; margin: 12mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <div class="title">Printable Roster</div>
+      <div class="muted" id="group-label">Loading…</div>
+    </div>
+    <div>
+      <a href="coaches-corner.html" class="btn" style="background:#6b7280;">← Back</a>
+      <button class="btn" onclick="window.print()">🖨️ Print</button>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="sheet-title" id="sheet-title">Roster</div>
+      <div class="counts" id="counts"></div>
+    </div>
+    <div class="sheet-body">
+      <table id="roster-table">
+        <thead>
+          <tr>
+            <th class="col-n">#</th>
+            <th class="col-name">Athlete Name</th>
+            <th class="col-grade">Grade</th>
+            <th class="col-notes">Notes / Check</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="google-sheets-integration.js"></script>
+  <script src="test-data.js"></script>
+  <script>
+    const GROUP_TITLES = {
+      '4k-1': '4K-1st Grade',
+      '2-3': '2nd-3rd Grade',
+      '4-5': '4th-5th Grade'
+    };
+
+    function getParam(name){
+      const u = new URL(window.location.href);
+      return u.searchParams.get(name);
+    }
+
+    async function loadRoster(){
+      const group = getParam('group') || '4k-1';
+      const groupLabel = GROUP_TITLES[group] || 'All Athletes';
+      document.getElementById('group-label').textContent = groupLabel;
+      document.getElementById('sheet-title').textContent = `Roster — ${groupLabel}`;
+
+      let athletes = [];
+      if (window.fetchAthletesFromSheet) {
+        try { athletes = await window.fetchAthletesFromSheet(); } catch(_) {}
+      }
+      if (!athletes || athletes.length === 0) {
+        athletes = window.testAthletes || [];
+      }
+
+      // Filter and sort
+      const filtered = athletes.filter(a => (group === 'all' ? true : a.gradeGroup === group))
+        .sort((a,b) => a.lastName.localeCompare(b.lastName));
+
+      // Render rows
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = filtered.map((a, idx) => `
+        <tr>
+          <td class="col-n">${idx+1}</td>
+          <td class="col-name">${a.firstName} ${a.lastName}</td>
+          <td class="col-grade">${a.grade}</td>
+          <td class="col-notes"></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('counts').textContent = `${filtered.length} athletes`;
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadRoster);
+    } else { loadRoster(); }
+  </script>
+</body>
+</html>
