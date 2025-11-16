@@ -373,6 +373,37 @@
         init();
     }
 
+    // Listen for Firebase real-time updates and refresh UI
+    window.addEventListener('firebase-attendance-updated', function(event) {
+        console.log('Firebase attendance update detected, refreshing UI...');
+        // Restore checked-in status from updated localStorage
+        athletes.forEach(a => {
+            a.checkedIn = getAttendanceForToday(buildAthleteKey(a));
+        });
+        renderAthletes();
+        updateStats();
+        updateSubmittedBadge();
+    });
+
+    window.addEventListener('firebase-athletes-updated', function(event) {
+        console.log('Firebase roster update detected, refreshing UI...');
+        const updatedAthletes = event.detail;
+        if (updatedAthletes && updatedAthletes.length > 0) {
+            athletes = updatedAthletes;
+            // Restore checked-in status
+            athletes.forEach(a => {
+                a.checkedIn = getAttendanceForToday(buildAthleteKey(a));
+            });
+            renderAthletes();
+            updateStats();
+        }
+    });
+
+    window.addEventListener('firebase-finalized-updated', function(event) {
+        console.log('Firebase finalized status updated, refreshing badge...');
+        updateSubmittedBadge();
+    });
+
     // ---------- Attendance CSV export ----------
     function exportAttendanceCSV() {
         const records = (function(){ try { return JSON.parse(localStorage.getItem(ATTENDANCE_STORAGE_KEY) || '{}'); } catch(_) { return {}; } })();
