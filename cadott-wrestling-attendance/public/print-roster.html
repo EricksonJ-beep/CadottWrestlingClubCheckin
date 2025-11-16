@@ -14,10 +14,6 @@
     .muted { color: var(--muted); font-size:.9rem; }
     .btn { background:#111827; color:#fff; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-block; border:none; font-size:.95rem; }
     .btn:hover { filter:brightness(1.1); }
-    .btn-group { display:flex; gap:8px; align-items:center; }
-    .sort-label { font-size:.85rem; color:var(--muted); font-weight:600; margin-right:4px; }
-    .sort-btn { background:#e5e7eb; color:#374151; padding:8px 12px; font-size:.85rem; }
-    .sort-btn.active { background:#111827; color:#fff; }
 
     .sheet { max-width: 900px; margin: 20px auto; background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; }
     .sheet-head { padding:16px 20px; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; justify-content:space-between; }
@@ -36,7 +32,6 @@
 
     @media print {
       .topbar { display:none; }
-      .btn-group { display:none; }
       body { background:#fff; }
       .sheet { border:none; margin:0; }
       th, td { font-size:12pt; padding:8pt 10pt; }
@@ -51,11 +46,8 @@
       <div class="title">Printable Roster</div>
       <div class="muted" id="group-label">Loading…</div>
     </div>
-    <div class="btn-group">
-      <span class="sort-label">Sort by:</span>
-      <button class="btn sort-btn active" id="sort-name-btn" onclick="setSortMode('name')">Name</button>
-      <button class="btn sort-btn" id="sort-grade-btn" onclick="setSortMode('grade')">Grade</button>
-      <a href="coaches-corner.html" class="btn" style="background:#6b7280; margin-left:8px;">← Back</a>
+    <div>
+      <a href="coaches-corner.html" class="btn" style="background:#6b7280;">← Back</a>
       <button class="btn" onclick="window.print()">🖨️ Print</button>
     </div>
   </div>
@@ -89,38 +81,56 @@
       '4-5': '4th-5th Grade'
     };
 
-    let currentAthletes = [];
-    let currentGroup = '';
-    let sortMode = 'name'; // 'name' or 'grade'
+    // Grade order: 4K first, then K, then numeric 1-5
+    const GRADE_ORDER = { '4k': 0, 'k': 1, '1': 2, '2': 3, '3': 4, '4': 5, '5': 6 };
+
+    function normalizeGradeCode(grade) {
+      const s = String(grade || '').toLowerCase().trim();
+      if (!s) return '';
+      if (s.startsWith('4k')) return '4k';
+      if (s.startsWith('k')) return 'k'; // "k", "kindergarten"
+      // handle "1st", "2nd", "3rd", "4th", "5th" and also plain numbers
+      const m = s.match(/^(\d+)/);
+      if (m) return m[1];
+      return s;
+    }
+
+    function getGradeOrder(grade) {
+      const normalized = normalizeGradeCode(grade);
+      return GRADE_ORDER[normalized] !== undefined ? GRADE_ORDER[normalized] : 999;
+    }
 
     function getParam(name){
       const u = new URL(window.location.href);
       return u.searchParams.get(name);
     }
 
-    function setSortMode(mode) {
-      sortMode = mode;
-      // Update button states
-      document.getElementById('sort-name-btn').classList.toggle('active', mode === 'name');
-      document.getElementById('sort-grade-btn').classList.toggle('active', mode === 'grade');
-      renderRoster();
-    }
+    async function loadRoster(){
+      const group = getParam('group') || '4k-1';
+      const groupLabel = GROUP_TITLES[group] || 'All Athletes';
+      document.getElementById('group-label').textContent = groupLabel;
+      document.getElementById('sheet-title').textContent = `Roster — ${groupLabel}`;
 
-    function renderRoster() {
-      const filtered = currentAthletes.filter(a => (currentGroup === 'all' ? true : a.gradeGroup === currentGroup));
-      
-      // Sort based on mode
-      if (sortMode === 'name') {
-        filtered.sort((a,b) => a.lastName.localeCompare(b.lastName));
-      } else {
-        // Sort by grade first, then by last name
-        filtered.sort((a,b) => {
-          const gradeA = parseInt(a.grade) || 0;
-          const gradeB = parseInt(b.grade) || 0;
-          if (gradeA !== gradeB) return gradeA - gradeB;
-          return a.lastName.localeCompare(b.lastName);
-        });
+      let athletes = [];
+      if (window.fetchAthletesFromSheet) {
+        try { athletes = await window.fetchAthletesFromSheet(); } catch(_) {}
       }
+      if (!athletes || athletes.length === 0) {
+        athletes = window.testAthletes || [];
+      }
+
+      // Filter by group
+      const filtered = athletes.filter(a => (group === 'all' ? true : a.gradeGroup === group));
+      
+      // Sort by grade order (4K, K, 1, 2, 3, 4, 5), then by last name, then first name
+      filtered.sort((a, b) => {
+        const orderA = getGradeOrder(a.grade);
+        const orderB = getGradeOrder(b.grade);
+        if (orderA !== orderB) return orderA - orderB;
+        const ln = a.lastName.localeCompare(b.lastName);
+        if (ln !== 0) return ln;
+        return a.firstName.localeCompare(b.firstName);
+      });
 
       // Render rows
       const tbody = document.getElementById('tbody');
@@ -134,24 +144,6 @@
       `).join('');
 
       document.getElementById('counts').textContent = `${filtered.length} athletes`;
-    }
-
-    async function loadRoster(){
-      currentGroup = getParam('group') || '4k-1';
-      const groupLabel = GROUP_TITLES[currentGroup] || 'All Athletes';
-      document.getElementById('group-label').textContent = groupLabel;
-      document.getElementById('sheet-title').textContent = `Roster — ${groupLabel}`;
-
-      let athletes = [];
-      if (window.fetchAthletesFromSheet) {
-        try { athletes = await window.fetchAthletesFromSheet(); } catch(_) {}
-      }
-      if (!athletes || athletes.length === 0) {
-        athletes = window.testAthletes || [];
-      }
-
-      currentAthletes = athletes;
-      renderRoster();
     }
 
     if (document.readyState === 'loading') {
