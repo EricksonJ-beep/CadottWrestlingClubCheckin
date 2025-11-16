@@ -580,4 +580,5 @@ const url = URL.createObjectURL(blob);
     }
 
     window.submitTodayAttendance = submitTodayAttendance;
+    window.exportAttendanceCSV = exportAttendanceCSV;
 })();

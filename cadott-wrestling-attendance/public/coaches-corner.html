@@ -325,7 +325,11 @@
       window.submitTodayAttendance && window.submitTodayAttendance();
     });
     document.getElementById('export-attendance').addEventListener('click', function(){
-      typeof exportAttendanceCSV === 'function' && exportAttendanceCSV();
+      if (typeof window.exportAttendanceCSV === 'function') {
+        window.exportAttendanceCSV();
+      } else {
+        showToast('❌ Export function not available');
+      }
     });
     document.getElementById('manual-refresh').addEventListener('click', refreshRosterCoachesCorner);
   </script>
