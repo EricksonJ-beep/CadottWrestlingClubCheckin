@@ -279,6 +279,39 @@
     // Make showToast available globally for app-display.js
     window.showToast = showToast;
 
+    // Coaches Corner specific refresh function (doesn't need DOM elements from main page)
+    async function refreshRosterCoachesCorner() {
+      if (typeof window.fetchAthletesFromSheet === 'function') {
+        try {
+          showToast('🔄 Refreshing roster from Google Sheets...');
+          const newAthletes = await window.fetchAthletesFromSheet();
+          if (newAthletes && newAthletes.length > 0) {
+            // Save to localStorage
+            try {
+              localStorage.setItem('athletesData', JSON.stringify(newAthletes));
+              const today = new Intl.DateTimeFormat('en-CA', { 
+                timeZone: 'America/Chicago', 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit' 
+              }).format(new Date());
+              localStorage.setItem('sheetsLastSync', today);
+            } catch (e) {
+              console.warn('Could not save to localStorage:', e);
+            }
+            showToast(`✨ Athlete list updated! (${newAthletes.length} athletes loaded)`);
+          } else {
+            showToast('⚠️ No athletes found in the sheet');
+          }
+        } catch (error) {
+          console.error('Error refreshing roster:', error);
+          showToast('❌ Error refreshing roster. Check console for details.');
+        }
+      } else {
+        showToast('❌ Google Sheets integration not loaded');
+      }
+    }
+
     // ============ Original Button Wiring ============
     // Wire up buttons to existing global functions
     document.getElementById('reset-history').addEventListener('click', function(){
@@ -294,15 +327,7 @@
     document.getElementById('export-attendance').addEventListener('click', function(){
       typeof exportAttendanceCSV === 'function' && exportAttendanceCSV();
     });
-    document.getElementById('manual-refresh').addEventListener('click', function(){
-      if (typeof window.refreshAthletes === 'function') {
-        window.refreshAthletes(false);
-      } else {
-        // Fallback if refreshAthletes isn't available
-        showToast('🔄 Refresh function not available. Reloading page...');
-        setTimeout(() => window.location.reload(), 1500);
-      }
-    });
+    document.getElementById('manual-refresh').addEventListener('click', refreshRosterCoachesCorner);
   </script>
 </body>
 </html>
