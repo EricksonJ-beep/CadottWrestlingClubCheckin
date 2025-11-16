@@ -11,6 +11,16 @@
     }
     function saveFinalizedMap(map) {
         try { localStorage.setItem(PRACTICE_FINALIZED_KEY, JSON.stringify(map)); } catch (_) {}
+        // Sync to Firebase if available
+        if (window.firebaseSync && window.firebaseSync.isReady()) {
+            const { doc, setDoc } = window.firestoreFunctions;
+            if (doc && setDoc) {
+                setDoc(doc(window.db, 'attendance', 'finalized'), {
+                    finalized: map,
+                    lastUpdated: new Date().toISOString()
+                }).catch(err => console.warn('Firebase sync error:', err));
+            }
+        }
     }
     function isTodayFinalized() {
         const map = loadFinalizedMap();
@@ -76,6 +86,18 @@
                 const newAthletes = await window.fetchAthletesFromSheet();
                 if (newAthletes.length > 0) {
                     athletes = newAthletes;
+                    // Save to localStorage
+                    try { localStorage.setItem('athletesData', JSON.stringify(newAthletes)); } catch (_) {}
+                    // Sync to Firebase if available
+                    if (window.firebaseSync && window.firebaseSync.isReady()) {
+                        const { doc, setDoc } = window.firestoreFunctions;
+                        if (doc && setDoc) {
+                            setDoc(doc(window.db, 'roster', 'athletes'), {
+                                athletes: newAthletes,
+                                lastUpdated: new Date().toISOString()
+                            }).catch(err => console.warn('Firebase sync error:', err));
+                        }
+                    }
                     renderAthletes();
                     updateStats();
                     setLastSyncDate(getTodayKey());
@@ -480,6 +502,17 @@ const url = URL.createObjectURL(blob);
 
     function saveAttendanceRecords(records) {
         try { localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(records)); } catch (_) {}
+        // Sync to Firebase if available
+        if (window.firebaseSync && window.firebaseSync.isReady()) {
+            // Firebase sync handles the full records object internally
+            const { doc, setDoc } = window.firestoreFunctions;
+            if (doc && setDoc) {
+                setDoc(doc(window.db, 'attendance', 'records'), {
+                    records: records,
+                    lastUpdated: new Date().toISOString()
+                }).catch(err => console.warn('Firebase sync error:', err));
+            }
+        }
     }
 
     function loadPracticeDates() {
@@ -488,6 +521,16 @@ const url = URL.createObjectURL(blob);
 
     function savePracticeDates(dates) {
         try { localStorage.setItem(PRACTICE_DATES_KEY, JSON.stringify(dates)); } catch (_) {}
+        // Sync to Firebase if available
+        if (window.firebaseSync && window.firebaseSync.isReady()) {
+            const { doc, setDoc } = window.firestoreFunctions;
+            if (doc && setDoc) {
+                setDoc(doc(window.db, 'attendance', 'practice-dates'), {
+                    dates: dates,
+                    lastUpdated: new Date().toISOString()
+                }).catch(err => console.warn('Firebase sync error:', err));
+            }
+        }
     }
 
     function getTodayCentralKey() {
