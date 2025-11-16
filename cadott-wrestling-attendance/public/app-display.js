@@ -370,10 +370,31 @@
             }
         }
 
-        // Sort athletes by last name
+        // Helper to convert grade to numeric value for sorting (4K, K, 1st, 2nd, etc.)
+        function gradeToNumber(grade) {
+            const g = String(grade).toLowerCase().trim();
+            if (g === '4k') return -1;  // 4K comes before K
+            if (g === 'k' || g === 'kindergarten') return 0;
+            // Extract number from grades like "1st", "2nd", "3rd", "4th", "5th"
+            const match = g.match(/^(\d+)/);
+            if (match) return parseInt(match[1], 10);
+            // If no match, put at end
+            return 999;
+        }
+
+        // Sort athletes by grade (4K through 5th), then by last name within each grade
         const sortedKeys = Array.from(allKeys).sort((a, b) => {
             const aInfo = info.get(a) || keyToInfoFallback(a);
             const bInfo = info.get(b) || keyToInfoFallback(b);
+            
+            // First, sort by grade
+            const gradeA = gradeToNumber(aInfo.grade);
+            const gradeB = gradeToNumber(bInfo.grade);
+            if (gradeA !== gradeB) {
+                return gradeA - gradeB;
+            }
+            
+            // If same grade, sort by last name
             return aInfo.lastName.localeCompare(bInfo.lastName);
         });
 
