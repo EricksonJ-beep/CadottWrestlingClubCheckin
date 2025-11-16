@@ -415,15 +415,14 @@
 
         const formattedDates = dates.map(formatDateUS);
 
-        // Build header: Athlete Name, Grade, then each formatted date
-        const header = ['Athlete Name', 'Grade', ...formattedDates];
+        // Build header: First Name, Last Name, Grade, then each formatted date
+        const header = ['First Name', 'Last Name', 'Grade', ...formattedDates];
         const rows = [header];
 
         // Build each athlete row
         for (const key of sortedKeys) {
             const meta = info.get(key) || keyToInfoFallback(key);
-            const athleteName = `${meta.firstName} ${meta.lastName}`;
-            const row = [athleteName, meta.grade];
+            const row = [meta.firstName, meta.lastName, meta.grade];
             
             // Add attendance for each date
             for (const date of dates) {
