@@ -39,20 +39,7 @@
 
   <main class="max-w-5xl mx-auto p-6">
     <div class="tools-grid">
-      <div class="tool-card danger">
-        <h3>Reset Attendance History</h3>
-        <p class="text-sm text-gray-600 mb-4">Clears all stored practice dates and check-in records. Athletes remain, but season stats will reset. This cannot be undone.</p>
-        <button id="reset-history" class="primary-btn danger-btn">🧹 Reset All Attendance</button>
-        <div class="note">Tip: Export CSV first if you want a backup.</div>
-      </div>
-
-      <div class="tool-card danger">
-        <h3>Reset Today's Check-ins</h3>
-        <p class="text-sm text-gray-600 mb-4">Removes ONLY today’s check-in data so you can start over for the current practice. Previous days remain intact.</p>
-        <button id="reset-today" class="primary-btn danger-btn">🔁 Reset Today Only</button>
-        <div class="note">Today will disappear from season stats until new check-ins occur.</div>
-      </div>
-
+      
       <div class="tool-card">
         <h3>Submit Today's Attendance</h3>
         <p class="text-sm text-gray-600 mb-4">Locks all check-ins for today so they cannot be changed. Use at end of practice.</p>
@@ -87,6 +74,21 @@
           <a href="print-roster.html?group=4-5" class="primary-btn" style="text-decoration:none;">🖨️ 4th-5th</a>
         </div>
         <div class="note">Tip: Use your browser's Print (Ctrl/Cmd+P). The page hides controls automatically.</div>
+      </div>
+
+      <!-- Move danger actions to the bottom -->
+      <div class="tool-card danger">
+        <h3>Reset Attendance History</h3>
+        <p class="text-sm text-gray-600 mb-4">Clears all stored practice dates and check-in records. Athletes remain, but season stats will reset. This cannot be undone.</p>
+        <button id="reset-history" class="primary-btn danger-btn">🧹 Reset All Attendance</button>
+        <div class="note">Tip: Export CSV first if you want a backup.</div>
+      </div>
+
+      <div class="tool-card danger">
+        <h3>Reset Today's Check-ins</h3>
+        <p class="text-sm text-gray-600 mb-4">Removes ONLY today’s check-in data so you can start over for the current practice. Previous days remain intact.</p>
+        <button id="reset-today" class="primary-btn danger-btn">🔁 Reset Today Only</button>
+        <div class="note">Today will disappear from season stats until new check-ins occur.</div>
       </div>
     </div>
   </main>
