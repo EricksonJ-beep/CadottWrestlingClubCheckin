@@ -33,13 +33,42 @@
     .danger-zone .dz-sub { font-size:.85rem; opacity:.9; }
     .danger-zone .dz-link { color:#7F1D1D; font-weight:700; text-decoration:underline; }
     .danger-zone .dz-link:hover { text-decoration:none; filter:brightness(0.9); }
+    
+    /* PIN Auth Overlay */
+    #auth-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:9999; display:flex; align-items:center; justify-content:center; }
+    #auth-overlay.hidden { display:none; }
+    .auth-box { background:#fff; border-radius:20px; padding:40px; max-width:400px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3); text-align:center; }
+    .auth-box h2 { font-size:1.75rem; font-weight:900; color:#DC2626; margin:0 0 10px; }
+    .auth-box p { color:#6b7280; margin:0 0 24px; }
+    .auth-box input { width:100%; padding:14px; border:2px solid #e5e7eb; border-radius:10px; font-size:1.1rem; text-align:center; letter-spacing:4px; font-weight:700; margin-bottom:16px; }
+    .auth-box input:focus { outline:none; border-color:#DC2626; }
+    .auth-box button { width:100%; background:linear-gradient(135deg,#DC2626 0%,#B91C1C 100%); color:#fff; padding:14px; border-radius:10px; font-weight:700; font-size:1rem; cursor:pointer; border:none; }
+    .auth-box button:hover { filter:brightness(1.1); }
+    .auth-error { color:#DC2626; font-size:.85rem; font-weight:600; margin-top:12px; display:none; }
+    .auth-error.show { display:block; }
+    .logout-btn { background:rgba(255,255,255,.15); padding:10px 16px; border-radius:8px; color:#fff; font-weight:600; cursor:pointer; border:none; }
+    .logout-btn:hover { background:rgba(255,255,255,.25); }
   </style>
 </head>
 <body>
+  <!-- PIN Auth Overlay -->
+  <div id="auth-overlay">
+    <div class="auth-box">
+      <h2>🔒 Coaches Corner</h2>
+      <p>Enter PIN to access admin tools</p>
+      <input type="password" id="pin-input" placeholder="••••" maxlength="4" inputmode="numeric" autofocus />
+      <button id="pin-submit">Unlock</button>
+      <div class="auth-error" id="auth-error">❌ Incorrect PIN. Try again.</div>
+    </div>
+  </div>
+
   <header class="header">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl md:text-3xl font-black tracking-tight flex items-center">Coaches Corner <span class="pill">Admin</span></h1>
-      <a href="index.html" class="nav-back">← Back to Check-In</a>
+      <div style="display:flex; gap:12px; align-items:center;">
+        <button id="logout-btn" class="logout-btn">🔓 Logout</button>
+        <a href="index.html" class="nav-back">← Back to Check-In</a>
+      </div>
     </div>
     <p class="mt-2 text-sm md:text-base opacity-90">Administrative tools for managing attendance data and settings.</p>
   </header>
@@ -113,6 +142,110 @@
   <script src="test-data.js"></script>
   <script src="app-display.js"></script>
   <script>
+    // ============ PIN Authentication ============
+    const CORRECT_PIN_HASH = 'a3c990a1964dd2487dbd93c9c4b69f5ffcf96043ed29dd51b0ce98cd98bc0c53'; // SHA-256 of "1234"
+    const AUTH_STORAGE_KEY = 'coachesCornerAuth';
+    const AUTH_SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours in ms
+
+    function sha256(str) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(str);
+      return crypto.subtle.digest('SHA-256', data).then(buffer => {
+        return Array.from(new Uint8Array(buffer))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('');
+      });
+    }
+
+    function checkAuth() {
+      try {
+        const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+        if (!stored) return false;
+        const { hash, timestamp } = JSON.parse(stored);
+        const now = Date.now();
+        if (now - timestamp > AUTH_SESSION_DURATION) {
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+          return false;
+        }
+        return hash === CORRECT_PIN_HASH;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function saveAuth() {
+      const authData = {
+        hash: CORRECT_PIN_HASH,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
+    }
+
+    function logout() {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      showAuthOverlay();
+    }
+
+    function showAuthOverlay() {
+      document.getElementById('auth-overlay').classList.remove('hidden');
+      document.getElementById('pin-input').value = '';
+      document.getElementById('pin-input').focus();
+      document.getElementById('auth-error').classList.remove('show');
+    }
+
+    function hideAuthOverlay() {
+      document.getElementById('auth-overlay').classList.add('hidden');
+    }
+
+    async function verifyPin() {
+      const pinInput = document.getElementById('pin-input');
+      const errorDiv = document.getElementById('auth-error');
+      const pin = pinInput.value.trim();
+      
+      if (!pin) return;
+      
+      const hash = await sha256(pin);
+      if (hash === CORRECT_PIN_HASH) {
+        saveAuth();
+        hideAuthOverlay();
+        errorDiv.classList.remove('show');
+      } else {
+        errorDiv.classList.add('show');
+        pinInput.value = '';
+        pinInput.focus();
+        // Shake animation
+        const authBox = document.querySelector('.auth-box');
+        authBox.style.animation = 'shake 0.4s';
+        setTimeout(() => authBox.style.animation = '', 400);
+      }
+    }
+
+    // Check auth on page load
+    if (checkAuth()) {
+      hideAuthOverlay();
+    } else {
+      showAuthOverlay();
+    }
+
+    // Wire up auth UI
+    document.getElementById('pin-submit').addEventListener('click', verifyPin);
+    document.getElementById('pin-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') verifyPin();
+    });
+    document.getElementById('logout-btn').addEventListener('click', logout);
+
+    // Add shake animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // ============ Original Button Wiring ============
     // Wire up buttons to existing global functions
     document.getElementById('reset-history').addEventListener('click', function(){
       window.resetAttendanceHistory && window.resetAttendanceHistory();
