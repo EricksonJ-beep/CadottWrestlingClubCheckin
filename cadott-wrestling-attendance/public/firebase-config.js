@@ -3,12 +3,12 @@
 // Get these from: Firebase Console > Project Settings > Your apps > Web app
 
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY_HERE",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyCVZo4VAofM1nxNrbhjA337RlyF-OmGixw",
+    authDomain: "cadott-wrestling-attendance.firebaseapp.com",
+    projectId: "cadott-wrestling-attendance",
+    storageBucket: "cadott-wrestling-attendance.firebasestorage.app",
+    messagingSenderId: "500129111160",
+    appId: "1:500129111160:web:0e640ad51c55864752218d"
 };
 
 // Initialize Firebase (will be done in firebase-sync.js)
