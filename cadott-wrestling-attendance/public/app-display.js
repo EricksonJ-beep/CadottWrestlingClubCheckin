@@ -612,6 +612,14 @@ const url = URL.createObjectURL(blob);
             localStorage.removeItem(PRACTICE_DATES_KEY);
             localStorage.removeItem(PRACTICE_FINALIZED_KEY);
         } catch (_) {}
+        // Broadcast reset to Firebase so other devices update immediately
+        if (window.firebaseSync && window.firebaseSync.isReady()) {
+            try {
+                window.firebaseSync.resetAllAttendance();
+            } catch (e) {
+                console.warn('Firebase resetAllAttendance failed', e);
+            }
+        }
         // Clear checkedIn flags for current roster
         athletes.forEach(a => a.checkedIn = false);
         renderAthletes();

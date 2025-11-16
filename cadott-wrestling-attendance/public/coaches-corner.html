@@ -330,6 +330,14 @@
             } catch (e) {
               console.warn('Could not save to localStorage:', e);
             }
+            // Broadcast to Firebase so other devices get the new roster
+            if (window.firebaseSync && window.firebaseSync.isReady()) {
+              try {
+                await window.firebaseSync.saveAthletes(newAthletes);
+              } catch (e) {
+                console.warn('Could not sync roster to Firebase:', e);
+              }
+            }
             showToast(`✨ Athlete list updated! (${newAthletes.length} athletes loaded)`);
           } else {
             showToast('⚠️ No athletes found in the sheet');
@@ -412,7 +420,7 @@
     });
 
     // Handle delete athlete
-    deleteAthleteBtn.addEventListener('click', function() {
+  deleteAthleteBtn.addEventListener('click', async function() {
       const selectedKey = deleteAthleteSelect.value;
       if (!selectedKey) return;
       
@@ -439,6 +447,26 @@
           }
         }
         localStorage.setItem('attendanceRecordsV1', JSON.stringify(attendanceRecords));
+
+        // Broadcast changes to Firebase so other devices update immediately
+        if (window.firebaseSync && window.firebaseSync.isReady()) {
+          try {
+            await window.firebaseSync.saveAthletes(updatedAthletes);
+          } catch (e) {
+            console.warn('Could not sync roster deletion to Firebase (athletes):', e);
+          }
+          try {
+            const { doc, setDoc } = window.firestoreFunctions || {};
+            if (doc && setDoc && window.db) {
+              await setDoc(doc(window.db, 'attendance', 'records'), {
+                records: attendanceRecords,
+                lastUpdated: new Date().toISOString()
+              });
+            }
+          } catch (e) {
+            console.warn('Could not sync roster deletion to Firebase (attendance):', e);
+          }
+        }
         
         showToast(`🗑️ Athlete deleted successfully`);
         
