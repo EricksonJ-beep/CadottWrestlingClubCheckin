@@ -21,6 +21,11 @@
     .nav-back { display:inline-block; margin-top:20px; color:#fff; background:rgba(255,255,255,.15); padding:10px 16px; border-radius:8px; text-decoration:none; font-weight:600; backdrop-filter:blur(4px); }
     .nav-back:hover { background:rgba(255,255,255,.25); }
     .pill { display:inline-block; background:#fff; color:#DC2626; font-weight:700; padding:4px 10px; border-radius:999px; font-size:.75rem; margin-left:10px; }
+    /* Accents and themed buttons */
+    .accent-purple { border-left:6px solid #7C3AED; }
+    .accent-green { border-left:6px solid #10B981; }
+    .purple-btn { background:linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%); color:#fff; }
+    .green-btn { background:linear-gradient(135deg,#10B981 0%,#059669 100%); color:#fff; }
   </style>
 </head>
 <body>
@@ -61,16 +66,16 @@
         <button id="export-attendance" class="primary-btn">📄 Export CSV</button>
       </div>
 
-      <div class="tool-card">
+      <div class="tool-card accent-green">
         <h3>Roster Refresh</h3>
         <p class="text-sm text-gray-600 mb-4">Manually pull the latest roster from the linked Google Sheet.</p>
-        <button id="manual-refresh" class="primary-btn">🔄 Refresh Roster</button>
+        <button id="manual-refresh" class="primary-btn green-btn">🔄 Refresh Roster</button>
       </div>
 
-      <div class="tool-card">
+      <div class="tool-card accent-purple">
         <h3>Season Stats Overview</h3>
         <p class="text-sm text-gray-600 mb-4">View aggregate group performance and per-athlete season attendance.</p>
-        <a href="season-stats.html" class="primary-btn" style="text-decoration:none; display:inline-block;">📊 Open Season Stats</a>
+        <a href="season-stats.html" class="primary-btn purple-btn" style="text-decoration:none; display:inline-block;">📊 Open Season Stats</a>
       </div>
 
       <div class="tool-card">
