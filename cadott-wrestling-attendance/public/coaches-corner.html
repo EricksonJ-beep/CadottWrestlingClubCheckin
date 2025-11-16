@@ -26,6 +26,11 @@
     .accent-green { border-left:6px solid #10B981; }
     .purple-btn { background:linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%); color:#fff; }
     .green-btn { background:linear-gradient(135deg,#10B981 0%,#059669 100%); color:#fff; }
+    /* Danger zone banner */
+    .full-span { grid-column: 1 / -1; }
+    .danger-zone { display:flex; align-items:center; gap:12px; padding:14px 16px; background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; border-radius:12px; }
+    .danger-zone .dz-title { font-weight:800; letter-spacing:.2px; }
+    .danger-zone .dz-sub { font-size:.85rem; opacity:.9; }
   </style>
 </head>
 <body>
@@ -74,6 +79,15 @@
           <a href="print-roster.html?group=4-5" class="primary-btn" style="text-decoration:none;">🖨️ 4th-5th</a>
         </div>
         <div class="note">Tip: Use your browser's Print (Ctrl/Cmd+P). The page hides controls automatically.</div>
+      </div>
+
+      <!-- Danger Zone header -->
+      <div class="full-span danger-zone">
+        <div style="font-size:1.25rem;">⚠️</div>
+        <div>
+          <div class="dz-title">Danger Zone</div>
+          <div class="dz-sub">Destructive actions — proceed with caution.</div>
+        </div>
       </div>
 
       <!-- Move danger actions to the bottom -->
