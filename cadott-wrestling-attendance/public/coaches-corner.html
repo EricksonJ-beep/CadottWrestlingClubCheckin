@@ -128,6 +128,19 @@
         </div>
       </div>
 
+      <!-- Delete Athlete -->
+      <div class="tool-card danger">
+        <h3>Delete Athlete</h3>
+        <p class="text-sm text-gray-600 mb-4">Permanently remove an athlete from the roster and all their attendance records. This cannot be undone.</p>
+        <div style="margin-bottom: 12px;">
+          <select id="delete-athlete-select" style="width:100%; padding:10px; border:2px solid #e5e7eb; border-radius:8px; font-size:1rem;">
+            <option value="">-- Select athlete to delete --</option>
+          </select>
+        </div>
+        <button id="delete-athlete-btn" class="primary-btn danger-btn" disabled>🗑️ Delete Selected Athlete</button>
+        <div class="note">The athlete will be removed from the roster and all attendance history.</div>
+      </div>
+
       <!-- Move danger actions to the bottom -->
       <div class="tool-card danger">
         <h3>Reset Attendance History</h3>
@@ -332,6 +345,97 @@
       }
     });
     document.getElementById('manual-refresh').addEventListener('click', refreshRosterCoachesCorner);
+
+    // ============ Delete Athlete Functionality ============
+    const deleteAthleteSelect = document.getElementById('delete-athlete-select');
+    const deleteAthleteBtn = document.getElementById('delete-athlete-btn');
+
+    // Populate athlete dropdown
+    function populateAthleteDropdown() {
+      try {
+        const athletesData = JSON.parse(localStorage.getItem('athletesData') || '[]');
+        
+        // Clear existing options except the first placeholder
+        deleteAthleteSelect.innerHTML = '<option value="">-- Select athlete to delete --</option>';
+        
+        // Sort athletes by grade then last name
+        function gradeToNumber(grade) {
+          const g = String(grade).toLowerCase().trim();
+          if (g === '4k') return -1;
+          if (g === 'k' || g === 'kindergarten') return 0;
+          const match = g.match(/^(\d+)/);
+          if (match) return parseInt(match[1], 10);
+          return 999;
+        }
+        
+        const sortedAthletes = [...athletesData].sort((a, b) => {
+          const gradeA = gradeToNumber(a.grade);
+          const gradeB = gradeToNumber(b.grade);
+          if (gradeA !== gradeB) return gradeA - gradeB;
+          return (a.lastName || '').localeCompare(b.lastName || '');
+        });
+        
+        // Add athletes to dropdown
+        sortedAthletes.forEach(athlete => {
+          const option = document.createElement('option');
+          const key = `${(athlete.lastName || '').trim().toLowerCase()}|${(athlete.firstName || '').trim().toLowerCase()}|${(athlete.grade || '').trim().toLowerCase()}`;
+          option.value = key;
+          option.textContent = `${athlete.firstName} ${athlete.lastName} (${athlete.grade})`;
+          deleteAthleteSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error populating athlete dropdown:', error);
+      }
+    }
+
+    // Enable/disable delete button based on selection
+    deleteAthleteSelect.addEventListener('change', function() {
+      deleteAthleteBtn.disabled = !this.value;
+    });
+
+    // Handle delete athlete
+    deleteAthleteBtn.addEventListener('click', function() {
+      const selectedKey = deleteAthleteSelect.value;
+      if (!selectedKey) return;
+      
+      const selectedText = deleteAthleteSelect.options[deleteAthleteSelect.selectedIndex].text;
+      
+      if (!confirm(`⚠️ Are you sure you want to DELETE ${selectedText}?\n\nThis will:\n• Remove them from the roster\n• Delete all their attendance records\n\nThis action CANNOT be undone!`)) {
+        return;
+      }
+      
+      try {
+        // Remove from athletesData
+        const athletesData = JSON.parse(localStorage.getItem('athletesData') || '[]');
+        const updatedAthletes = athletesData.filter(a => {
+          const key = `${(a.lastName || '').trim().toLowerCase()}|${(a.firstName || '').trim().toLowerCase()}|${(a.grade || '').trim().toLowerCase()}`;
+          return key !== selectedKey;
+        });
+        localStorage.setItem('athletesData', JSON.stringify(updatedAthletes));
+        
+        // Remove from all attendance records
+        const attendanceRecords = JSON.parse(localStorage.getItem('attendanceRecordsV1') || '{}');
+        for (const date in attendanceRecords) {
+          if (attendanceRecords[date] && attendanceRecords[date][selectedKey]) {
+            delete attendanceRecords[date][selectedKey];
+          }
+        }
+        localStorage.setItem('attendanceRecordsV1', JSON.stringify(attendanceRecords));
+        
+        showToast(`🗑️ Athlete deleted successfully`);
+        
+        // Refresh the dropdown
+        populateAthleteDropdown();
+        deleteAthleteBtn.disabled = true;
+        
+      } catch (error) {
+        console.error('Error deleting athlete:', error);
+        showToast('❌ Error deleting athlete. Check console for details.');
+      }
+    });
+
+    // Populate dropdown on page load
+    populateAthleteDropdown();
   </script>
 </body>
 </html>
