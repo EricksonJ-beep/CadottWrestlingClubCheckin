@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "redirects": [
+    { "source": "/cadott-wrestling-attendance/public", "destination": "/", "permanent": true },
+    { "source": "/cadott-wrestling-attendance/public/", "destination": "/", "permanent": true },
+    { "source": "/cadott-wrestling-attendance/public/(.*)", "destination": "/$1", "permanent": true }
+  ],
+  "cleanUrls": true
+}
