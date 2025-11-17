@@ -96,6 +96,8 @@
         #welcome-screen.hidden {
             opacity: 0;
             visibility: hidden;
+            pointer-events: none;
+            display: none;
         }
         
         #welcome-screen img {
@@ -278,6 +280,7 @@
         
         tapToStartBtn.addEventListener('click', function() {
             welcomeScreen.classList.add('hidden');
+            setTimeout(() => { welcomeScreen.style.display = 'none'; }, 400); // ensure display:none after fade
             // Store that user has started this session (optional - comment out if you want it every time)
             sessionStorage.setItem('welcomeScreenSeen', 'true');
         });
@@ -285,6 +288,7 @@
         // Check if welcome screen was already seen in this session (optional)
         if (sessionStorage.getItem('welcomeScreenSeen') === 'true') {
             welcomeScreen.classList.add('hidden');
+            setTimeout(() => { welcomeScreen.style.display = 'none'; }, 10);
         }
     </script>
     <!-- Firebase Configuration -->
