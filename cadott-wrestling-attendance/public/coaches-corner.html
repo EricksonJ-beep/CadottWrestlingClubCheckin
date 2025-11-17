@@ -348,6 +348,10 @@
               }
             }
             showToast(`✨ Athlete list updated! (${newAthletes.length} athletes loaded)`);
+            
+            // Refresh UI components
+            populateAthleteDropdown();
+            populateUSAMembershipList();
           } else {
             showToast('⚠️ No athletes found in the sheet');
           }
@@ -479,8 +483,9 @@
         
         showToast(`🗑️ Athlete deleted successfully`);
         
-        // Refresh the dropdown
+        // Refresh the dropdown and USA membership list
         populateAthleteDropdown();
+        populateUSAMembershipList();
         deleteAthleteBtn.disabled = true;
         
       } catch (error) {
