@@ -46,8 +46,12 @@
     .auth-box button:hover { filter:brightness(1.1); }
     .auth-error { color:#DC2626; font-size:.85rem; font-weight:600; margin-top:12px; display:none; }
     .auth-error.show { display:block; }
-    .logout-btn { background:rgba(255,255,255,.15); padding:10px 16px; border-radius:8px; color:#fff; font-weight:600; cursor:pointer; border:none; }
+    .logout-btn { background:rgba(255,255,255,.15); padding:10px 20px; border-radius:8px; color:#fff; font-weight:600; cursor:pointer; border:none; font-size:1rem; line-height:1; display:flex; align-items:center; justify-content:center; height:46px; box-sizing:border-box; gap:6px; }
     .logout-btn:hover { background:rgba(255,255,255,.25); }
+    .topnav-actions { display:flex; gap:16px; align-items:center; }
+    .topnav-actions > * { display:flex; align-items:center; justify-content:center; height:46px; line-height:1; font-size:1rem; box-sizing:border-box; padding:10px 20px; border-radius:8px; }
+    .nav-back { background:rgba(255,255,255,.15); text-decoration:none; font-weight:600; color:#fff; }
+    .nav-back:hover { background:rgba(255,255,255,.25); }
     
     /* Toast Animation */
     @keyframes slide-in {
@@ -72,7 +76,7 @@
   <header class="header">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl md:text-3xl font-black tracking-tight flex items-center">Coaches Corner <span class="pill">Admin</span></h1>
-      <div style="display:flex; gap:12px; align-items:center;">
+      <div class="topnav-actions">
         <button id="logout-btn" class="logout-btn">🔓 Logout</button>
         <a href="index.html" class="nav-back">← Back to Check-In</a>
       </div>
