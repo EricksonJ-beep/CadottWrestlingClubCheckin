@@ -326,6 +326,24 @@
           showToast('🔄 Refreshing roster from Google Sheets...');
           const newAthletes = await window.fetchAthletesFromSheet();
           if (newAthletes && newAthletes.length > 0) {
+            // Preserve USA Wrestling membership status from existing data
+            const existingAthletes = JSON.parse(localStorage.getItem('athletesData') || '[]');
+            const membershipMap = new Map();
+            existingAthletes.forEach(a => {
+              const key = `${(a.lastName || '').trim().toLowerCase()}|${(a.firstName || '').trim().toLowerCase()}|${(a.grade || '').trim().toLowerCase()}`;
+              if (a.usaMembership) {
+                membershipMap.set(key, true);
+              }
+            });
+            
+            // Apply preserved membership status to new athletes
+            newAthletes.forEach(a => {
+              const key = `${(a.lastName || '').trim().toLowerCase()}|${(a.firstName || '').trim().toLowerCase()}|${(a.grade || '').trim().toLowerCase()}`;
+              if (membershipMap.has(key)) {
+                a.usaMembership = true;
+              }
+            });
+            
             // Save to localStorage
             try {
               localStorage.setItem('athletesData', JSON.stringify(newAthletes));
