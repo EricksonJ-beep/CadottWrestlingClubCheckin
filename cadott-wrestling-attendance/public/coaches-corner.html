@@ -128,6 +128,22 @@
         <div class="note">Tip: Use your browser's Print (Ctrl/Cmd+P). The page hides controls automatically.</div>
       </div>
 
+      <!-- Edit Past Attendance -->
+      <div class="tool-card" style="border-left:6px solid #0EA5E9;">
+        <h3>Edit Past Attendance</h3>
+        <p class="text-sm text-gray-600 mb-4">Select a past practice date, then toggle present/absent for athletes. Changes sync across devices.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+          <select id="edit-date-select" style="flex:1; min-width:220px; padding:10px; border:2px solid #e5e7eb; border-radius:8px; font-size:1rem;"></select>
+          <input id="edit-search" type="text" placeholder="Filter by name or grade..." style="flex:1; min-width:220px; padding:10px; border:2px solid #e5e7eb; border-radius:8px; font-size:1rem;"/>
+        </div>
+        <div id="edit-attendance-list" style="max-height: 360px; overflow-y: auto; border:1px solid #eee; border-radius:10px; padding:8px;"></div>
+        <div style="display:flex; gap:10px; align-items:center; margin-top:12px;">
+          <button id="edit-save-btn" class="primary-btn" disabled>💾 Save Changes</button>
+          <div id="edit-changed-pill" class="pill" style="display:none;">0 changes</div>
+        </div>
+        <div class="note">Finalized days remain marked submitted. This tool only adjusts who was present.</div>
+      </div>
+
       <!-- Danger Zone header -->
       <div class="full-span danger-zone">
         <div style="font-size:1.25rem;">⚠️</div>
@@ -597,6 +613,107 @@
     window.addEventListener('firebase-athletes-updated', function() {
       populateUSAMembershipList();
     });
+
+    // ============ Edit Past Attendance Logic ============
+    (function(){
+      const editDateSelect = document.getElementById('edit-date-select');
+      const editSearch = document.getElementById('edit-search');
+      const editList = document.getElementById('edit-attendance-list');
+      const editSaveBtn = document.getElementById('edit-save-btn');
+      const editChangedPill = document.getElementById('edit-changed-pill');
+      if (!editDateSelect) return; // card not present
+
+      let editPresentMap = {}; // key -> boolean for selected date
+      let editChangedCount = 0;
+
+      function buildAthleteKeyLocal(a){
+        return `${(a.lastName||'').trim().toLowerCase()}|${(a.firstName||'').trim().toLowerCase()}|${(a.grade||'').trim().toLowerCase()}`;
+      }
+      function gradeToNumberLocal(g){
+        const s=String(g||'').toLowerCase(); if(s==='4k')return-1; if(s==='k'||s==='kindergarten')return 0; const n=parseInt(s,10); return isNaN(n)?999:n;
+      }
+      function formatDateUS(dateKey){ try{const [y,m,d]=String(dateKey).split('-'); return `${String(parseInt(m,10)).padStart(2,'0')}/${String(parseInt(d,10)).padStart(2,'0')}/${y}`;}catch(_){return dateKey;} }
+
+      function updateChangedUI(){
+        if (!editChangedPill) return;
+        editChangedPill.style.display = editChangedCount>0?'inline-block':'none';
+        editChangedPill.textContent = `${editChangedCount} change${editChangedCount===1?'':'s'}`;
+        if (editSaveBtn) editSaveBtn.disabled = editChangedCount===0;
+      }
+
+      function loadPracticeDates(){
+        const dates = JSON.parse(localStorage.getItem('practiceDatesV1')||'[]');
+        const options = dates.slice().sort().map(d=>`<option value="${d}">${formatDateUS(d)}</option>`).join('');
+        editDateSelect.innerHTML = options || '<option value="">No practice dates</option>';
+        return dates;
+      }
+      function loadEditMapForDate(dateKey){
+        const records = JSON.parse(localStorage.getItem('attendanceRecordsV1')||'{}');
+        editPresentMap = { ...(records[dateKey]||{}) };
+        editChangedCount = 0; updateChangedUI();
+      }
+      function renderEditList(){
+        const athletes = JSON.parse(localStorage.getItem('athletesData')||'[]');
+        const filter = (editSearch.value||'').trim().toLowerCase();
+        const dateKey = editDateSelect.value;
+        if (!dateKey){ editList.innerHTML='<div class="text-sm text-gray-600 p-3">Select a practice date.</div>'; return; }
+        const sorted = athletes.slice().sort((a,b)=>{const ga=gradeToNumberLocal(a.grade),gb=gradeToNumberLocal(b.grade); if(ga!==gb)return ga-gb; return (a.lastName||'').localeCompare(b.lastName||'');});
+        const rows=[];
+        for(const a of sorted){
+          const key=buildAthleteKeyLocal(a);
+          const label=`${a.lastName}, ${a.firstName} • ${a.grade}`.toLowerCase();
+          if(filter && !label.includes(filter)) continue;
+          const present=!!editPresentMap[key];
+          rows.push(`<label style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-bottom:1px solid #f3f4f6;">
+            <span style="font-size:.95rem;">${a.lastName}, ${a.firstName} <span style=\"color:#6b7280;\">• ${a.grade}</span></span>
+            <input type=\"checkbox\" data-athlete-key=\"${key}\" ${present?'checked':''} />
+          </label>`);
+        }
+        editList.innerHTML = rows.join('') || '<div class="text-sm text-gray-600 p-3">No athletes match your filter.</div>';
+        editList.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+          cb.addEventListener('change',(e)=>{
+            const k=e.target.getAttribute('data-athlete-key');
+            const prev=!!editPresentMap[k];
+            const next=!!e.target.checked;
+            if(prev!==next){ editPresentMap[k]=next; editChangedCount++; updateChangedUI(); }
+          });
+        });
+      }
+      async function saveEditedAttendance(){
+        const dateKey = editDateSelect.value; if(!dateKey) return;
+        const records = JSON.parse(localStorage.getItem('attendanceRecordsV1')||'{}');
+        records[dateKey] = editPresentMap;
+        localStorage.setItem('attendanceRecordsV1', JSON.stringify(records));
+        try{
+          if(window.firebaseSync && window.firebaseSync.isReady()){
+            const { doc, setDoc } = window.firestoreFunctions || {};
+            if(doc && setDoc && window.db){
+              await setDoc(doc(window.db,'attendance','records'), { records, lastUpdated:new Date().toISOString() });
+            }
+          }
+          showToast(`✅ Saved edits for ${formatDateUS(dateKey)}`);
+          editChangedCount = 0; updateChangedUI();
+        }catch(err){ console.error('Error saving edited attendance:', err); showToast('❌ Error saving edits'); }
+      }
+
+      // init
+      loadPracticeDates();
+      if (editDateSelect.value){ loadEditMapForDate(editDateSelect.value); }
+      renderEditList();
+      editDateSelect.addEventListener('change', ()=>{ loadEditMapForDate(editDateSelect.value); renderEditList(); });
+      editSearch.addEventListener('input', ()=>{ renderEditList(); });
+      editSaveBtn.addEventListener('click', saveEditedAttendance);
+
+      // refresh on firebase updates
+      window.addEventListener('firebase-athletes-updated', ()=>{ renderEditList(); });
+      window.addEventListener('firebase-attendance-updated', (e)=>{
+        const dateKey = editDateSelect.value; if(!dateKey) return;
+        const detail=e && e.detail; if(detail && detail.records && detail.records[dateKey]){
+          editPresentMap = { ...(detail.records[dateKey]) };
+          editChangedCount=0; updateChangedUI(); renderEditList();
+        }
+      });
+    })();
   </script>
 
   <style>
