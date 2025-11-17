@@ -26,8 +26,8 @@
             color: white;
         }
         .k-2 { background: #4CAF50; }
-        .3-4 { background: #2196F3; }
-        .5-6 { background: #FF9800; }
+        .g3-4 { background: #2196F3; }
+        .g5-6 { background: #FF9800; }
         button {
             padding: 10px 20px;
             font-size: 16px;
@@ -80,7 +80,11 @@
                             <div class="athlete">
                                 <strong>${athlete.firstName} ${athlete.lastName}</strong> - 
                                 Grade: ${athlete.grade}
-                                <span class="grade-group ${athlete.gradeGroup}">${athlete.gradeGroup.toUpperCase()}</span>
+                                <span class="grade-group ${
+                                    athlete.gradeGroup === '3-4' ? 'g3-4' :
+                                    athlete.gradeGroup === '5-6' ? 'g5-6' :
+                                    athlete.gradeGroup
+                                }">${athlete.gradeGroup.toUpperCase()}</span>
                             </div>
                         `).join('');
                 } else {

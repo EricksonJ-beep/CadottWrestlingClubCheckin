@@ -5,6 +5,10 @@
     const ATTENDANCE_STORAGE_KEY = 'attendanceRecordsV1';
     const PRACTICE_DATES_KEY = 'practiceDatesV1';
     const PRACTICE_FINALIZED_KEY = 'practiceFinalizedV1';
+    const USA_MEMBERS_KEY = 'usaMembersV1';
+
+    // USA membership map: key => true
+    let usaMembers = {};
 
     function loadFinalizedMap() {
         try { return JSON.parse(localStorage.getItem(PRACTICE_FINALIZED_KEY) || '{}'); } catch (_) { return {}; }
@@ -53,6 +57,9 @@
             athletes.forEach(a => {
                 a.checkedIn = getAttendanceForToday(buildAthleteKey(a));
             });
+
+            // Load USA membership map
+            usaMembers = loadUsaMembers();
 
             setupEventListeners();
             renderAthletes();
@@ -150,6 +157,10 @@
         }
     }
 
+    function loadUsaMembers() {
+        try { return JSON.parse(localStorage.getItem(USA_MEMBERS_KEY) || '{}'); } catch (_) { return {}; }
+    }
+
     // Remove duplicate simple refresh (kept enhanced refresh above)
 
     // Setup event listeners
@@ -230,7 +241,7 @@
         
         if (emptyState) emptyState.classList.add('hidden');
         
-        // Sort by last name
+    // Sort by last name
         displayAthletes.sort((a, b) => a.lastName.localeCompare(b.lastName));
         
         // Generate HTML
@@ -239,11 +250,14 @@
             const key = buildAthleteKey(athlete);
             const summary = getAthleteAttendanceSummary(key);
             const summaryText = summary.total > 0 ? `Season: ${summary.present}/${summary.total} (${summary.percent}%)` : '';
+            const isUsa = !!usaMembers[key];
             return `
             <div class="athlete-card ${athlete.checkedIn ? 'checked-in' : ''} bg-white p-5 rounded-xl shadow-md" data-id="${athlete.id}">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex-1">
-                        <h3 class="font-bold text-lg text-gray-800">${athlete.firstName} ${athlete.lastName}</h3>
+                        <h3 class="font-bold text-lg text-gray-800 flex items-center">${athlete.firstName} ${athlete.lastName}
+                            ${isUsa ? '<img src="usa_wrestling_logo.jpg" alt="USA Wrestling" title="USA Wrestling member" class="ml-2" style="width:20px;height:20px;object-fit:contain;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,0.2);" onerror="this.style.display=\'none\'">' : ''}
+                        </h3>
                         <p class="text-sm text-gray-600">Grade ${athlete.grade}${athlete.weight ? ' • ' + athlete.weight + ' lbs' : ''}</p>
                         ${summaryText ? `<p class=\"text-xs text-gray-500 mt-1\">${summaryText}</p>` : ''}
                     </div>
@@ -402,6 +416,13 @@
     window.addEventListener('firebase-finalized-updated', function(event) {
         console.log('Firebase finalized status updated, refreshing badge...');
         updateSubmittedBadge();
+    });
+
+    // USA membership real-time updates
+    window.addEventListener('firebase-usa-updated', function(event) {
+        console.log('Firebase USA membership updated');
+        usaMembers = event.detail || loadUsaMembers();
+        renderAthletes();
     });
 
     // ---------- Attendance CSV export ----------

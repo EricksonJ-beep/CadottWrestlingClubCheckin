@@ -73,6 +73,7 @@
     <div class="flex items-center justify-between">
       <h1 class="text-2xl md:text-3xl font-black tracking-tight flex items-center">Coaches Corner <span class="pill">Admin</span></h1>
       <div style="display:flex; gap:12px; align-items:center;">
+        <a href="#usa-membership-card" class="nav-back" title="Jump to USA Membership">🇺🇸 USA Membership</a>
         <button id="logout-btn" class="logout-btn">🔓 Logout</button>
         <a href="index.html" class="nav-back">← Back to Check-In</a>
       </div>
@@ -88,6 +89,20 @@
         <p class="text-sm text-gray-600 mb-4">Locks all check-ins for today so they cannot be changed. Use at end of practice.</p>
         <button id="submit-today-btn" class="primary-btn">📌 Submit Today</button>
         <div class="note">After submission, check-in buttons become read-only for today.</div>
+      </div>
+
+      <!-- USA Membership Management -->
+      <div class="tool-card" id="usa-membership-card">
+        <h3>USA Membership</h3>
+        <p class="text-sm text-gray-600 mb-4">Mark wrestlers who purchased a USA Wrestling card. This shows a USA badge next to their name.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+          <select id="usa-athlete-select" style="flex:1; min-width:220px; padding:10px; border:2px solid #e5e7eb; border-radius:8px; font-size:1rem;">
+            <option value="">-- Select athlete --</option>
+          </select>
+          <button id="usa-mark-btn" class="primary-btn" disabled>🇺🇸 Mark as Member</button>
+          <button id="usa-unmark-btn" class="primary-btn danger-btn" disabled>❎ Remove</button>
+        </div>
+        <div class="note">Changes sync to all devices automatically. Roster refresh won't remove USA flags.</div>
       </div>
 
       <div class="tool-card" id="export-card">
@@ -467,6 +482,24 @@
             console.warn('Could not sync roster deletion to Firebase (attendance):', e);
           }
         }
+
+        // Also remove any USA membership flag for this athlete
+        try {
+          const USA_MEMBERS_KEY = 'usaMembersV1';
+          const map = JSON.parse(localStorage.getItem(USA_MEMBERS_KEY) || '{}');
+          if (map[selectedKey]) {
+            delete map[selectedKey];
+            localStorage.setItem(USA_MEMBERS_KEY, JSON.stringify(map));
+            if (window.firebaseSync && window.firebaseSync.saveUsaMembers) {
+              try { await window.firebaseSync.saveUsaMembers(map); } catch (e) { console.warn('Could not sync USA map after deletion:', e); }
+            } else {
+              // Notify locally for immediate UI update
+              window.dispatchEvent(new CustomEvent('firebase-usa-updated', { detail: map }));
+            }
+          }
+        } catch (e) {
+          console.warn('USA membership cleanup failed after deletion:', e);
+        }
         
         showToast(`🗑️ Athlete deleted successfully`);
         
@@ -482,6 +515,86 @@
 
     // Populate dropdown on page load
     populateAthleteDropdown();
+
+    // ================= USA Membership Management =================
+    const USA_MEMBERS_KEY = 'usaMembersV1';
+    const usaSelect = document.getElementById('usa-athlete-select');
+    const usaMarkBtn = document.getElementById('usa-mark-btn');
+    const usaUnmarkBtn = document.getElementById('usa-unmark-btn');
+
+    function loadUsaMembers() {
+      try { return JSON.parse(localStorage.getItem(USA_MEMBERS_KEY) || '{}'); } catch (_) { return {}; }
+    }
+
+    function populateUsaDropdown() {
+      try {
+        const athletesData = JSON.parse(localStorage.getItem('athletesData') || '[]');
+        const usaMap = loadUsaMembers();
+        usaSelect.innerHTML = '<option value="">-- Select athlete --</option>';
+
+        function gradeToNumber(grade) {
+          const g = String(grade).toLowerCase().trim();
+          if (g === '4k') return -1;
+          if (g === 'k' || g === 'kindergarten') return 0;
+          const match = g.match(/^(\d+)/);
+          if (match) return parseInt(match[1], 10);
+          return 999;
+        }
+
+        const sorted = [...athletesData].sort((a, b) => {
+          const ga = gradeToNumber(a.grade), gb = gradeToNumber(b.grade);
+          if (ga !== gb) return ga - gb;
+          return (a.lastName || '').localeCompare(b.lastName || '');
+        });
+
+        sorted.forEach(a => {
+          const key = `${(a.lastName || '').trim().toLowerCase()}|${(a.firstName || '').trim().toLowerCase()}|${(a.grade || '').trim().toLowerCase()}`;
+          const opt = document.createElement('option');
+          opt.value = key;
+          const star = usaMap[key] ? '⭐ ' : '';
+          opt.textContent = `${star}${a.firstName} ${a.lastName} (${a.grade})`;
+          usaSelect.appendChild(opt);
+        });
+      } catch (e) {
+        console.warn('populateUsaDropdown error', e);
+      }
+    }
+
+    usaSelect.addEventListener('change', function(){
+      const hasSel = !!this.value;
+      usaMarkBtn.disabled = !hasSel;
+      usaUnmarkBtn.disabled = !hasSel;
+    });
+
+    async function setUsaMembership(isMember) {
+      const key = usaSelect.value;
+      if (!key) return;
+      try {
+        if (window.firebaseSync && window.firebaseSync.setUsaMember) {
+          await window.firebaseSync.setUsaMember(key, !!isMember);
+        } else {
+          // local fallback
+          const map = loadUsaMembers();
+          if (isMember) map[key] = true; else delete map[key];
+          localStorage.setItem(USA_MEMBERS_KEY, JSON.stringify(map));
+          // Manually dispatch update so UI refreshes
+          window.dispatchEvent(new CustomEvent('firebase-usa-updated', { detail: map }));
+        }
+        showToast(isMember ? '🇺🇸 Marked as USA member' : '❎ Removed USA member');
+        populateUsaDropdown();
+      } catch (e) {
+        console.error('setUsaMembership error', e);
+        showToast('❌ Error updating USA membership');
+      }
+    }
+
+    usaMarkBtn.addEventListener('click', () => setUsaMembership(true));
+    usaUnmarkBtn.addEventListener('click', () => setUsaMembership(false));
+
+    // Refresh options when roster or USA map updates
+    window.addEventListener('firebase-athletes-updated', populateUsaDropdown);
+    window.addEventListener('firebase-usa-updated', populateUsaDropdown);
+    populateUsaDropdown();
   </script>
 </body>
 </html>

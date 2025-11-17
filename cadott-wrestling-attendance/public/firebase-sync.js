@@ -18,6 +18,7 @@
     const PRACTICE_DATES_KEY = 'practiceDatesV1';
     const PRACTICE_FINALIZED_KEY = 'practiceFinalizedV1';
     const ATHLETES_KEY = 'athletesData';
+    const USA_MEMBERS_KEY = 'usaMembersV1';
     const FIREBASE_ENABLED_KEY = 'firebaseSyncEnabled';
 
     // Check if Firebase sync is enabled
@@ -172,6 +173,19 @@
                 }
             });
             unsubscribeListeners.push(athletesUnsub);
+
+            // Listen to USA membership changes
+            const usaUnsub = onSnapshot(doc(db, 'roster', 'usa-members'), (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    const map = data.members || {};
+                    localStorage.setItem(USA_MEMBERS_KEY, JSON.stringify(map));
+                    window.dispatchEvent(new CustomEvent('firebase-usa-updated', {
+                        detail: map
+                    }));
+                }
+            });
+            unsubscribeListeners.push(usaUnsub);
 
             // Listen to attendance records changes
             const attendanceUnsub = onSnapshot(doc(db, 'attendance', 'records'), (snapshot) => {
@@ -366,6 +380,30 @@
             } catch (error) {
                 console.error('Error resetting today in Firebase:', error);
             }
+        },
+
+        // Save entire USA membership map
+        saveUsaMembers: async function(map) {
+            // Persist locally
+            localStorage.setItem(USA_MEMBERS_KEY, JSON.stringify(map || {}));
+
+            if (!isFirebaseReady || !isFirebaseEnabled()) return;
+            try {
+                const { doc, setDoc } = window.firestoreFunctions;
+                await setDoc(doc(db, 'roster', 'usa-members'), {
+                    members: map || {},
+                    lastUpdated: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('Error saving USA membership map to Firebase:', error);
+            }
+        },
+
+        // Toggle a single athlete USA membership
+        setUsaMember: async function(athleteKey, isMember) {
+            const map = JSON.parse(localStorage.getItem(USA_MEMBERS_KEY) || '{}');
+            if (isMember) map[athleteKey] = true; else delete map[athleteKey];
+            return this.saveUsaMembers(map);
         },
 
         // Check if Firebase is ready and enabled
