@@ -1,6 +1,6 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/cadott-wrestling-attendance/public/$1" }
+    { "source": "/cadott-wrestling-attendance/public/(.*)", "destination": "/$1" }
   ]
 }
