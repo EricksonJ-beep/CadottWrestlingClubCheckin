@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Cadott Wrestling Club - Check In</title>
-    <link href="styles.css" rel="stylesheet">
+    <link href="styles.css?v=20251117" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="logo.png" type="image/png">
@@ -97,7 +97,7 @@
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
-            display: none;
+            display: none !important;
         }
         
         #welcome-screen img {
@@ -280,7 +280,6 @@
         
         tapToStartBtn.addEventListener('click', function() {
             welcomeScreen.classList.add('hidden');
-            setTimeout(() => { welcomeScreen.style.display = 'none'; }, 400); // ensure display:none after fade
             // Store that user has started this session (optional - comment out if you want it every time)
             sessionStorage.setItem('welcomeScreenSeen', 'true');
         });
@@ -288,7 +287,6 @@
         // Check if welcome screen was already seen in this session (optional)
         if (sessionStorage.getItem('welcomeScreenSeen') === 'true') {
             welcomeScreen.classList.add('hidden');
-            setTimeout(() => { welcomeScreen.style.display = 'none'; }, 10);
         }
     </script>
     <!-- Firebase Configuration -->
