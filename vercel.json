@@ -1,9 +1,13 @@
 {
   "version": 2,
+  "cleanUrls": true,
   "redirects": [
+    { "source": "/team-hub", "destination": "/", "permanent": true },
+    { "source": "/index-high-school", "destination": "/", "permanent": true },
+    { "source": "/index-middle-school", "destination": "/", "permanent": true },
+    { "source": "/index-youth", "destination": "/", "permanent": true },
     { "source": "/cadott-wrestling-attendance/public", "destination": "/", "permanent": true },
     { "source": "/cadott-wrestling-attendance/public/", "destination": "/", "permanent": true },
     { "source": "/cadott-wrestling-attendance/public/(.*)", "destination": "/$1", "permanent": true }
-  ],
-  "cleanUrls": true
+  ]
 }
