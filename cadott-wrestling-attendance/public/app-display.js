@@ -176,17 +176,8 @@
         const gradeTabs = document.querySelectorAll('.grade-tab');
         gradeTabs.forEach(tab => {
             tab.addEventListener('click', function() {
-                // Remove active class from all tabs
-                gradeTabs.forEach(t => {
-                    t.classList.remove('active', 'bg-yellow-400', 'text-gray-800');
-                    t.classList.add('bg-gray-200', 'text-gray-700');
-                });
-                
-                // Add active class to clicked tab
-                this.classList.add('active', 'bg-yellow-400', 'text-gray-800');
-                this.classList.remove('bg-gray-200', 'text-gray-700');
-                
-                // Update filter
+                gradeTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
                 currentFilter = this.dataset.grade;
                 renderAthletes();
             });
